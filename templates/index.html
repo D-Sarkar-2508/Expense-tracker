@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+    <h1>My Expenses</h1>
+    <p class="subtitle">Track your daily spending</p>
+</div>
+
+<!-- Add Expense Form -->
+<div class="card form-card">
+    <h2>➕ Add New Expense</h2>
+    <form action="{{ url_for('add_expense') }}" method="POST">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" name="title" placeholder="e.g. Lunch, Bus ticket" required>
+            </div>
+            <div class="form-group">
+                <label>Amount (₹) *</label>
+                <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label>Category *</label>
+                <select name="category" required>
+                    <option value="" disabled selected>Select category</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" name="date" required
+                       value="{{ today }}"
+                       id="date-input">
+            </div>
+            <div class="form-group full-width">
+                <label>Note (optional)</label>
+                <input type="text" name="note" placeholder="Any extra detail...">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Expense</button>
+    </form>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-row">
+    <a href="{{ url_for('search') }}" class="summary-card clickable">
+        <div class="summary-icon">💰</div>
+            <div>
+                <div class="summary-label">Total Spent</div>
+                <div class="summary-value">₹{{ total }}</div>
+            </div>
+        <div class="card-arrow">→</div>
+    </a>
+
+    <a href="{{ url_for('index') }}#expense-table" class="summary-card clickable">
+        <div class="summary-icon">📋</div>
+        <div>
+            <div class="summary-label">Total Entries</div>
+            <div class="summary-value">{{ expenses | length }}</div>
+        </div>
+        <div class="card-arrow">→</div>
+    </a>
+
+    <a href="{{ url_for('filter_expenses') }}" class="summary-card clickable">
+        <div class="summary-icon">🏷️</div>
+        <div>
+            <div class="summary-label">Categories Used</div>
+            <div class="summary-value">{{ cat_labels | length }}</div>
+        </div>
+        <div class="card-arrow">→</div>
+    </a>
+</div>
+
+<!-- Chart -->
+{% if cat_labels %}
+<div class="card chart-card">
+    <h2>📊 Spending by Category</h2>
+    <div class="chart-wrapper">
+        <canvas id="categoryChart"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- Expense Table -->
+<div class="card" id="expense-table">
+    <h2>📝 All Expenses</h2>
+    {% if expenses %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Note</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in expenses %}
+                <tr>
+                    <td>{{ e.date.strftime('%d %b %Y') }}</td>
+                    <td><strong>{{ e.title }}</strong></td>
+                    <td><span class="badge badge-{{ e.category | lower }}">{{ e.category }}</span></td>
+                    <td class="amount">₹{{ "%.2f" | format(e.amount) }}</td>
+                    <td class="note-cell">{{ e.note or '—' }}</td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="{{ url_for('edit_expense', id=e.id) }}" class="btn btn-edit btn-sm">✏️</a>
+                            <a href="{{ url_for('delete_expense', id=e.id) }}"
+                            class="btn btn-danger btn-sm"
+                            onclick="return confirm('Delete this expense?')">🗑️</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>Total</strong></td>
+                    <td class="amount"><strong>₹{{ total }}</strong></td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">No expenses yet. Add your first one above! 👆</p>
+    {% endif %}
+</div>
+
+<<script>
+    document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+
+    {% if cat_labels %}
+    const urlMap = {};
+    {% for i in range(cat_labels|length) %}
+        urlMap["{{ cat_labels[i] }}"] = "{{ url_for('filter_expenses') }}?category={{ cat_labels[i] }}";
+    {% endfor %}
+
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels | tojson }},
+            datasets: [{
+                data: {{ cat_values | tojson }},
+                backgroundColor: [
+                    '#6366f1','#f59e0b','#10b981','#ef4444',
+                    '#3b82f6','#8b5cf6','#ec4899','#14b8a6'
+                ],
+                borderWidth: 2,
+                borderColor: '#1e1e2e',
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#cdd6f4', font: { size: 13 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        footer: () => 'Click to view expenses'
+                    }
+                }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const label = chart.data.labels[elements[0].index];
+                    if (urlMap[label]) window.location.href = urlMap[label];
+                }
+            },
+            onHover: (event, elements) => {
+                event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

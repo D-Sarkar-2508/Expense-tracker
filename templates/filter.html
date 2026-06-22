@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+    <h1>🔍 Filter Expenses</h1>
+    <p class="subtitle">Browse by category</p>
+</div>
+
+<div class="card">
+    <form method="GET" action="{{ url_for('filter_expenses') }}" class="filter-form">
+        <select name="category" onchange="this.form.submit()">
+            <option value="All" {% if selected == 'All' %}selected{% endif %}>All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>
+        Results —
+        {% if selected != 'All' %}
+            <span class="badge badge-{{ selected | lower }}">{{ selected }}</span>
+        {% else %}
+            All
+        {% endif %}
+        <span class="total-inline">Total: ₹{{ total }}</span>
+    </h2>
+
+    {% if expenses %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in expenses %}
+                <tr>
+                    <td>{{ e.date.strftime('%d %b %Y') }}</td>
+                    <td><strong>{{ e.title }}</strong></td>
+                    <td><span class="badge badge-{{ e.category | lower }}">{{ e.category }}</span></td>
+                    <td class="amount">₹{{ "%.2f" | format(e.amount) }}</td>
+                    <td>{{ e.note or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">No expenses found for this category.</p>
+    {% endif %}
+
+    <div style="margin-top:1.5rem;">
+        <a href="{{ url_for('index') }}" class="btn btn-cancel">← Back to Home</a>
+    </div>
+</div>
+
+{% endblock %}

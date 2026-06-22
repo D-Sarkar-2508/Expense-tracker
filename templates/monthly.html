@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+    <h1>📅 Monthly Summary</h1>
+    <p class="subtitle">Your spending month by month</p>
+</div>
+
+<!-- Year Selector -->
+<div class="card">
+    <h2>📆 Select Year</h2>
+    <div class="year-selector">
+        {% for y in available_years %}
+        <a href="{{ url_for('monthly') }}?year={{ y }}"
+           class="year-chip {% if y == selected_year %}active-chip{% endif %}">
+            {{ y }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+{% if monthly_data %}
+<div class="card chart-card">
+    <h2>📊 Monthly Spending — {{ selected_year }}</h2>
+    <div class="chart-wrapper" style="max-width:100%">
+        <canvas id="monthlyChart"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📋 Month-wise Breakdown — {{ selected_year }}</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Month</th>
+                    <th>Total Spent</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in monthly_data %}
+                <tr class="clickable-row"
+                    onclick="window.location='{{ url_for('monthly_detail', year=m.year, month=m.month) }}'">
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ m.label }}</strong> <span class="row-arrow">→</span></td>
+                    <td class="amount">₹{{ m.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const urlMap = {};
+    {% for m in monthly_data %}
+        urlMap["{{ m.label }}"] = "{{ url_for('monthly_detail', year=m.year, month=m.month) }}";
+    {% endfor %}
+
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ monthly_data | map(attribute='label') | list | tojson }},
+            datasets: [{
+                label: 'Total Spent (₹)',
+                data: {{ monthly_data | map(attribute='total') | list | tojson }},
+                backgroundColor: '#6366f1',
+                hoverBackgroundColor: '#a5b4fc',
+                borderRadius: 6,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#cdd6f4' } },
+                tooltip: { callbacks: { footer: () => 'Click to view details' } }
+            },
+            scales: {
+                x: { ticks: { color: '#cdd6f4' }, grid: { color: '#313244' } },
+                y: { ticks: { color: '#cdd6f4' }, grid: { color: '#313244' } }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const label = chart.data.labels[elements[0].index];
+                    if (urlMap[label]) window.location.href = urlMap[label];
+                }
+            },
+            onHover: (event, elements) => {
+                event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+            }
+        }
+    });
+</script>
+
+{% else %}
+<div class="card">
+    <p class="empty-msg">No expenses found for <strong>{{ selected_year }}</strong>.</p>
+</div>
+{% endif %}
+
+<div style="margin-top:1rem;">
+    <a href="{{ url_for('index') }}" class="btn btn-cancel">← Back to Home</a>
+</div>
+
+{% endblock %}

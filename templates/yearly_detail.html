@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-header">
+    <h1>📆 {{ year }} Expenses</h1>
+    <p class="subtitle">All expenses for the year {{ year }}</p>
+</div>
+
+<!-- Summary -->
+<div class="summary-row" style="grid-template-columns: repeat(2, 1fr);">
+    <div class="summary-card">
+        <div class="summary-icon">💰</div>
+        <div>
+            <div class="summary-label">Total Spent</div>
+            <div class="summary-value">₹{{ total }}</div>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-icon">📋</div>
+        <div>
+            <div class="summary-label">Total Entries</div>
+            <div class="summary-value">{{ expenses | length }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Doughnut -->
+{% if cat_labels %}
+<div class="card chart-card">
+    <h2>📊 Category Breakdown — {{ year }}</h2>
+    <div class="chart-wrapper">
+        <canvas id="catChart"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- Expense Table -->
+<div class="card">
+    <h2>📝 All Expenses — {{ year }} <span class="total-inline">Total: ₹{{ total }}</span></h2>
+    {% if expenses %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in expenses %}
+                <tr>
+                    <td>{{ e.date.strftime('%d %b %Y') }}</td>
+                    <td><strong>{{ e.title }}</strong></td>
+                    <td><span class="badge badge-{{ e.category | lower }}">{{ e.category }}</span></td>
+                    <td class="amount">₹{{ "%.2f" | format(e.amount) }}</td>
+                    <td class="note-cell">{{ e.note or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>Total</strong></td>
+                    <td class="amount"><strong>₹{{ total }}</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">No expenses found for {{ year }}.</p>
+    {% endif %}
+
+    <div style="margin-top:1.5rem;">
+        <a href="{{ url_for('yearly') }}" class="btn btn-cancel">← Back to Yearly</a>
+    </div>
+</div>
+
+{% if cat_labels %}
+<script>
+    const ctx = document.getElementById('catChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels | tojson }},
+            datasets: [{
+                data: {{ cat_values | tojson }},
+                backgroundColor: [
+                    '#6366f1','#f59e0b','#10b981','#ef4444',
+                    '#3b82f6','#8b5cf6','#ec4899','#14b8a6'
+                ],
+                borderWidth: 2,
+                borderColor: '#1e1e2e',
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#cdd6f4', font: { size: 13 } }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}
