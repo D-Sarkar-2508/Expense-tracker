@@ -420,3 +420,61 @@ a.summary-card:hover .card-arrow {
     gap: 0.6rem;
     flex-wrap: wrap;
 }
+/* ========== AUTH PAGES ========== */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+.auth-header h1 { font-size: 1.8rem; font-weight: 800; }
+.auth-header p  { color: var(--text-muted); margin-top: 0.25rem; }
+
+.btn-full { width: 100%; margin-top: 0.5rem; text-align: center; }
+
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Nav user & logout */
+.nav-user {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-left: 1.5rem;
+}
+
+.btn-logout {
+    margin-left: 1rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--danger);
+    color: var(--danger) !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-logout:hover {
+    background: rgba(243,139,168,0.1);
+    text-decoration: none !important;
+}
