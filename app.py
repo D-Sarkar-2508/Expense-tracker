@@ -5,10 +5,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
 from sqlalchemy import func
 import calendar
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'expense-tracker-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.adyvolgkagyrzvidgkkg:Ditipriya2508@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
